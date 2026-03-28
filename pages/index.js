@@ -84,7 +84,7 @@ function HistoryItem({ meeting, onClick }) {
   const date = new Date(meeting.timestamp);
   const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   return (
-    <button className="history-item" onClick={onClick}>
+    <button className={`history-item ${meeting.mode === "investor" ? "is-investor" : ""}`} onClick={onClick}>
       <div className="history-item-top">
         <span className="history-who">{meeting.whoTheyAre}</span>
         <span className="history-date">{dateStr}</span>
@@ -481,6 +481,10 @@ export default function Home() {
         .stat-label { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); }
         .history-list { display: flex; flex-direction: column; gap: 8px; }
         .history-item { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; transition: background 0.35s ease; }
+        .history-item.is-investor { background: #ede9e0; border-color: rgba(0,0,0,0.09); }
+        .history-item.is-investor .history-who { color: #1a1a1a; }
+        .history-item.is-investor .history-date { color: rgba(26,26,26,0.35); }
+        .history-item.is-investor .history-type { color: #b8922a; }
         .history-item-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
         .history-who { font-size: 0.9rem; color: var(--ink); }
         .history-date { font-size: 0.62rem; color: var(--ink-dim); }

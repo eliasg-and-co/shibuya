@@ -2,7 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { Redis } from "@upstash/redis";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const redis = Redis.fromEnv();
+const redis = new Redis({
+  url: process.env.storage_KV_REST_API_URL,
+  token: process.env.storage_KV_REST_API_TOKEN,
+});
 
 const SHIBUYA_CONTEXT = `
 ABOUT MÁUHAN AND SHIBUYA:
