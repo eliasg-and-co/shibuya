@@ -1,6 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { Redis } from "@upstash/redis";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const redis = Redis.fromEnv();
 
 const SHIBUYA_CONTEXT = `
 ABOUT MÁUHAN AND SHIBUYA:
@@ -16,9 +18,9 @@ CURRENT STAGE:
 Seed. Next 90 days: find a rockstar CPO, identify which prototype is THE product. 6 months to viable product. Backing secured. Vision locked. Building team now.
 
 MARKET POSITION:
-- Streaming's MAU-to-premium conversion collapsed from ~40% to 27% (2021–2024). The format hasn't evolved since 2015.
-- Suno raised $250M at $2.45B — AI music is real. But 85% of AI music streams are fraudulent (Deezer). Listener backlash is growing. Shibuya is the answer to that hunger, not a competitor.
-- Capital is flowing into catalog (Domain Capital $768M, Duetti $435M). New format innovation is unfunded. That's the opening.
+- Streaming MAU-to-premium conversion collapsed from ~40% to 27% (2021-2024). Format unchanged since 2015.
+- Suno at $2.45B — AI music is real. But 85% of AI music streams fraudulent (Deezer). Listener backlash growing. Shibuya is the answer to that hunger.
+- Capital flowing into catalog (Domain $768M, Duetti $435M). New format innovation unfunded. That's the opening.
 
 MÁUHAN'S VOICE:
 Direct. Culturally sharp. Anti-corporate. Taste as competitive advantage. Band t-shirts, not cap tables.
@@ -50,44 +52,64 @@ Under 300 words total. Every word earns its place. Specific, never generic.`;
 const INVESTOR_PREP_SYSTEM = `You are an investor relations strategist preparing Máuhan Vongsvirates for a VC meeting. You think like a senior IR advisor — anticipate the hardest questions, draft answers in the founder's voice, surface the risks before the investor does.
 ${SHIBUYA_CONTEXT}
 
-Your job: generate a sharp investor prep sheet for this specific fund and partner. This is modeled on institutional IR prep for public company earnings calls — structured by investor type, hard questions only, answers in Máuhan's voice.
-
 FORMAT — use these exact headers, nothing before the first one:
 
 THEIR LENS
-[2-3 sentences on this fund's thesis, what they've backed before, and the specific angle they'll take into a Shibuya meeting. Be specific to this fund, not generic VC.]
+[2-3 sentences on this fund's thesis, what they've backed, and the angle they'll take into a Shibuya meeting.]
 
 THE THREE HARDEST QUESTIONS THEY'LL ASK
-1. [Hard question — the one that could derail the meeting if unprepared]
+1. [Hard question that could derail the meeting if unprepared]
 2. [Hard question]
 3. [Hard question]
 
 DRAFT ANSWERS
-1. [Answer to Q1 in Máuhan's voice — direct, culturally fluent, no corporate hedging. 2-4 sentences.]
+1. [Answer in Máuhan's voice — direct, culturally fluent. 2-4 sentences.]
 2. [Answer to Q2]
 3. [Answer to Q3]
 
 LEAD WITH THIS
-[The single strongest opening for this specific fund given their thesis — one sentence Máuhan should say in the first two minutes]
+[The single strongest opening for this fund — one sentence for the first two minutes]
 
 WHAT THEY'RE REALLY ASKING
-[The underlying concern or thesis test behind all three questions — what this investor actually needs to believe to write the check. 1-2 sentences.]
+[The underlying concern behind all three questions — what they need to believe to write the check. 1-2 sentences.]
 
-Under 380 words. Hard questions only. Write like someone who has sat in hundreds of investor meetings and knows where founders get tripped up.`;
+Under 380 words. Hard questions only.`;
 
 const RESEARCH_PROMPT = `Research this person or fund briefly. Cover:
 - Primary investment thesis and focus
 - Notable portfolio companies especially in music, consumer, culture, creator economy
 - What lens they bring to a seed-stage music software company
-- Any known opinions or priorities relevant to this meeting
 2-3 paragraphs. Factual only.`;
 
-let meetingLog = [];
+const HISTORY_KEY = "shibuya:meeting_log";
+
+async function getHistory() {
+  try {
+    const data = await redis.get(HISTORY_KEY);
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (typeof data === "string") return JSON.parse(data);
+    return [];
+  } catch (err) {
+    console.warn("Redis get failed:", err.message);
+    return [];
+  }
+}
+
+async function saveHistory(log) {
+  try {
+    await redis.set(HISTORY_KEY, JSON.stringify(log));
+  } catch (err) {
+    console.warn("Redis set failed:", err.message);
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    return res.status(200).json({ meetings: meetingLog });
+    const meetings = await getHistory();
+    return res.status(200).json({ meetings });
   }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -108,14 +130,10 @@ export default async function handler(req, res) {
         max_tokens: 600,
         tools: [{ type: "web_search_20250305", name: "web_search" }],
         system: RESEARCH_PROMPT,
-        messages: [{
-          role: "user",
-          content: `Research: ${searchQuery}\nContext: Preparing founder of seed-stage music software label for investor meeting.`,
-        }],
+        messages: [{ role: "user", content: `Research: ${searchQuery}\nContext: Seed-stage music software label founder meeting.` }],
       });
       researchContext = researchMsg.content.filter(b => b.type === "text").map(b => b.text).join("\n").trim();
     } catch (err) {
-      console.warn("Research failed:", err.message);
       researchContext = `Fund: ${fundName}${partnerName ? `, Partner: ${partnerName}` : ""}`;
     }
 
@@ -124,15 +142,7 @@ export default async function handler(req, res) {
         model: "claude-opus-4-5",
         max_tokens: 1000,
         system: INVESTOR_PREP_SYSTEM,
-        messages: [{
-          role: "user",
-          content: `FUND: ${fundName}
-PARTNER: ${partnerName || "Not specified"}
-CONVERSATION STAGE: ${conversationStage}
-RESEARCHED CONTEXT: ${researchContext}
-
-Generate the investor prep sheet.`,
-        }],
+        messages: [{ role: "user", content: `FUND: ${fundName}\nPARTNER: ${partnerName || "Not specified"}\nSTAGE: ${conversationStage}\nCONTEXT: ${researchContext}` }],
       });
 
       const prep = prepMsg.content.find(b => b.type === "text")?.text;
@@ -147,8 +157,10 @@ Generate the investor prep sheet.`,
         desiredOutcome: conversationStage,
         brief: prep,
       };
-      meetingLog.unshift(entry);
-      if (meetingLog.length > 50) meetingLog = meetingLog.slice(0, 50);
+
+      const history = await getHistory();
+      history.unshift(entry);
+      await saveHistory(history.slice(0, 100));
 
       return res.status(200).json({ brief: prep, logId: entry.id });
     } catch (err) {
@@ -157,7 +169,7 @@ Generate the investor prep sheet.`,
     }
   }
 
-  // Default: meeting brief mode
+  // Meeting brief mode
   if (!meetingType || !whoTheyAre || !desiredOutcome) {
     return res.status(400).json({ error: "All fields required" });
   }
@@ -169,14 +181,10 @@ Generate the investor prep sheet.`,
       max_tokens: 600,
       tools: [{ type: "web_search_20250305", name: "web_search" }],
       system: RESEARCH_PROMPT,
-      messages: [{
-        role: "user",
-        content: `Meeting type: ${meetingType}\nWho: ${whoTheyAre}\nResearch this person/fund for a seed-stage music software label meeting.`,
-      }],
+      messages: [{ role: "user", content: `Meeting type: ${meetingType}\nWho: ${whoTheyAre}\nResearch for seed-stage music software label meeting.` }],
     });
     researchContext = researchMsg.content.filter(b => b.type === "text").map(b => b.text).join("\n").trim();
   } catch (err) {
-    console.warn("Research failed:", err.message);
     researchContext = `${meetingType} with ${whoTheyAre}`;
   }
 
@@ -185,13 +193,7 @@ Generate the investor prep sheet.`,
       model: "claude-opus-4-5",
       max_tokens: 900,
       system: BRIEF_SYSTEM,
-      messages: [{
-        role: "user",
-        content: `MEETING TYPE: ${meetingType}
-WHO: ${whoTheyAre}
-RESEARCHED CONTEXT: ${researchContext}
-DESIRED OUTCOME: ${desiredOutcome}`,
-      }],
+      messages: [{ role: "user", content: `MEETING TYPE: ${meetingType}\nWHO: ${whoTheyAre}\nCONTEXT: ${researchContext}\nOUTCOME: ${desiredOutcome}` }],
     });
 
     const brief = briefMsg.content.find(b => b.type === "text")?.text;
@@ -206,8 +208,10 @@ DESIRED OUTCOME: ${desiredOutcome}`,
       desiredOutcome,
       brief,
     };
-    meetingLog.unshift(entry);
-    if (meetingLog.length > 50) meetingLog = meetingLog.slice(0, 50);
+
+    const history = await getHistory();
+    history.unshift(entry);
+    await saveHistory(history.slice(0, 100));
 
     return res.status(200).json({ brief, logId: entry.id });
   } catch (err) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
 
 const MEETING_TYPES = [
@@ -95,7 +95,7 @@ function HistoryItem({ meeting, onClick }) {
 }
 
 export default function Home() {
-  const [appMode, setAppMode] = useState("brief"); // "brief" | "investor"
+  const [appMode, setAppMode] = useState("brief");
   const [view, setView] = useState("form");
   const [briefForm, setBriefForm] = useState({ meetingType: "", whoTheyAre: "", desiredOutcome: "" });
   const [investorForm, setInvestorForm] = useState({ fundName: "", partnerName: "", conversationStage: "" });
@@ -106,6 +106,14 @@ export default function Home() {
 
   const loadingMessages = ["Researching...", "Reading the room...", "Building the brief...", "Almost there..."];
   const isInvestor = appMode === "investor";
+
+  // Load persistent history on mount
+  useEffect(() => {
+    fetch("/api/generate")
+      .then(r => r.json())
+      .then(data => { if (data.meetings) setHistory(data.meetings); })
+      .catch(() => {});
+  }, []);
 
   const switchMode = (mode) => {
     setAppMode(mode);
@@ -189,7 +197,6 @@ export default function Home() {
         </header>
 
         <main>
-          {/* MODE TOGGLE — always visible on form view */}
           {(view === "form" || view === "loading") && (
             <div className="mode-toggle-wrap">
               <div className="mode-toggle">
@@ -209,7 +216,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* BRIEF FORM */}
           {view === "form" && !isInvestor && (
             <div className="fade-in">
               <div className="form-intro">
@@ -242,7 +248,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* INVESTOR PREP FORM */}
           {view === "form" && isInvestor && (
             <div className="fade-in">
               <div className="form-intro">
@@ -275,7 +280,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* LOADING */}
           {view === "loading" && (
             <div className="loading-wrap fade-in">
               <div className="loading-label">{loadingMsg}</div>
@@ -283,7 +287,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* RESULT */}
           {view === "brief" && result && (
             <div className="fade-in">
               <ResultView
@@ -295,7 +298,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* HISTORY */}
           {view === "history" && (
             <div className="fade-in">
               <div className="history-head">
@@ -344,7 +346,6 @@ export default function Home() {
           --r: 12px;
         }
 
-        /* INVESTOR MODE — inverted */
         .mode-investor {
           --bg: #f5f2ec;
           --surface: #ede9e0;
@@ -388,7 +389,7 @@ export default function Home() {
         }
         .header-inner { display: flex; justify-content: space-between; align-items: center; height: 56px; }
         .wordmark { display: flex; align-items: baseline; }
-        .wm-a { font-family: var(--serif); font-size: 0.88rem; opacity: 0.85; }
+        .wm-a { font-family: var(--serif); font-size: 0.88rem; color: var(--ink); opacity: 0.75; }
         .wm-dot { opacity: 0.3; font-size: 0.88rem; margin: 0 6px; }
         .wm-b { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
         .nav-btn {
@@ -402,18 +403,10 @@ export default function Home() {
 
         main { flex: 1; padding: 28px 20px 80px; }
 
-        /* MODE TOGGLE */
-        .mode-toggle-wrap {
-          display: flex; justify-content: center;
-          margin-bottom: 36px;
-        }
+        .mode-toggle-wrap { display: flex; justify-content: center; margin-bottom: 36px; }
         .mode-toggle {
-          display: flex;
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: 30px;
-          padding: 3px;
-          gap: 2px;
+          display: flex; background: var(--surface); border: 1px solid var(--border);
+          border-radius: 30px; padding: 3px; gap: 2px;
           transition: background 0.35s ease, border-color 0.35s ease;
         }
         .toggle-btn {
@@ -423,18 +416,14 @@ export default function Home() {
           cursor: pointer; transition: background 0.25s, color 0.25s;
           -webkit-tap-highlight-color: transparent;
         }
-        .toggle-btn.active {
-          background: var(--accent); color: var(--bg);
-        }
+        .toggle-btn.active { background: var(--accent); color: var(--bg); }
 
-        /* FADE */
         .fade-in { animation: fadeUp 0.35s ease forwards; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* FORM */
         .form-intro { margin-bottom: 36px; }
-        .form-intro h1 { font-family: var(--serif); font-size: 2.2rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 10px; }
-        .form-intro h1 em { font-style: italic; }
+        .form-intro h1 { font-family: var(--serif); font-size: 2.2rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 10px; color: var(--ink); }
+        .form-intro h1 em { font-style: italic; color: var(--ink); }
         .form-sub { font-size: 0.76rem; color: var(--ink-dim); }
         .field { margin-bottom: 32px; }
         label { display: block; font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 12px; }
@@ -463,7 +452,6 @@ export default function Home() {
         .submit-btn:active { background: var(--accent); color: var(--bg); }
         .error-msg { color: var(--red); font-size: 0.72rem; margin-bottom: 16px; }
 
-        /* LOADING */
         .loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 40dvh; gap: 24px; }
         .loading-label { font-family: var(--serif); font-size: 1.4rem; font-style: italic; opacity: 0.7; }
         .loading-dots { display: flex; gap: 8px; }
@@ -472,26 +460,24 @@ export default function Home() {
         .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes blink { 0%, 80%, 100% { opacity: 0.15; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
 
-        /* BRIEF / RESULT */
         .brief-view { display: flex; flex-direction: column; }
         .back-btn { background: none; border: none; color: var(--ink-dim); font-family: var(--mono); font-size: 0.72rem; cursor: pointer; padding: 0; margin-bottom: 24px; text-align: left; }
         .brief-chip-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .chip { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); opacity: 0.85; }
         .chip-time { font-size: 0.62rem; color: var(--ink-dim); }
-        .brief-who { font-family: var(--serif); font-size: 1.6rem; font-style: italic; letter-spacing: -0.01em; margin-bottom: 32px; line-height: 1.2; }
+        .brief-who { font-family: var(--serif); font-size: 1.6rem; font-style: italic; letter-spacing: -0.01em; margin-bottom: 32px; line-height: 1.2; color: var(--ink); opacity: 1; }
         .sections { display: flex; flex-direction: column; gap: 28px; margin-bottom: 40px; }
         .section { border-left: 2px solid var(--border); padding-left: 16px; }
         .section-label { font-size: 0.56rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; opacity: 0.85; }
         .section-body p { font-size: 0.9rem; line-height: 1.7; color: var(--ink); margin-bottom: 8px; }
         .print-btn { background: none; border: 1px solid var(--border); color: var(--ink-dim); font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em; padding: 10px 20px; border-radius: 20px; cursor: pointer; align-self: flex-end; }
 
-        /* HISTORY */
         .history-head { margin-bottom: 24px; }
-        .history-head h2 { font-family: var(--serif); font-size: 1.5rem; font-style: italic; margin-bottom: 8px; }
+        .history-head h2 { font-family: var(--serif); font-size: 1.5rem; font-style: italic; margin-bottom: 8px; color: var(--ink); }
         .history-empty { font-size: 0.8rem; color: var(--ink-dim); }
         .history-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 28px; }
         .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 12px; text-align: center; transition: background 0.35s ease; }
-        .stat-num { font-family: var(--serif); font-size: 1.8rem; line-height: 1; margin-bottom: 4px; }
+        .stat-num { font-family: var(--serif); font-size: 1.8rem; line-height: 1; margin-bottom: 4px; color: var(--ink); }
         .stat-label { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); }
         .history-list { display: flex; flex-direction: column; gap: 8px; }
         .history-item { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; transition: background 0.35s ease; }
