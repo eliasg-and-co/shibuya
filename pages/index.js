@@ -19,30 +19,51 @@ const CONVO_STAGES = [
   "Term sheet — closing",
 ];
 
-const BRIEF_LABELS = [
-  "WHO YOU'RE WALKING IN WITH",
-  "LEAD WITH THESE",
-  "CONSIDER ASKING",
-  "LEAVE BEHIND",
-];
-
-const PREP_LABELS = [
-  "THEIR LENS",
-  "THE THREE HARDEST QUESTIONS THEY'LL ASK",
-  "DRAFT ANSWERS",
-  "LEAD WITH THIS",
-  "WHAT THEY'RE REALLY ASKING",
-];
-
-const UPDATE_LABELS = [
-  "THE MONTH IN ONE LINE",
-  "WHAT HAPPENED",
-  "THE NUMBERS",
-  "WHAT'S NEXT",
-  "THE ASK",
-];
-
+const BRIEF_LABELS = ["WHO YOU'RE WALKING IN WITH","LEAD WITH THESE","CONSIDER ASKING","LEAVE BEHIND"];
+const PREP_LABELS = ["THEIR LENS","THE THREE HARDEST QUESTIONS THEY'LL ASK","DRAFT ANSWERS","LEAD WITH THIS","WHAT THEY'RE REALLY ASKING"];
+const UPDATE_LABELS = ["THE MONTH IN ONE LINE","WHAT HAPPENED","THE NUMBERS","WHAT'S NEXT","THE ASK"];
 const MODES = ["brief", "investor", "update"];
+
+const PLAYLIST = [
+  { title: "northern organix", artist: "lojii, Swarvy", url: "https://open.spotify.com/track/4ZROo3NwUM3UusHizN33h3" },
+  { title: "Freestyle Shit", artist: "Freddie Gibbs, Madlib", url: "https://open.spotify.com/track/2cHbaJXQcw14NzfplQoUWi" },
+  { title: "Drive In", artist: "Blu, Madlib, MED, Aloe Blacc", url: "https://open.spotify.com/track/6mBbycgdWgHMPNyJLCEoW6" },
+  { title: "Nu Path", artist: "Ivan Ave", url: "https://open.spotify.com/track/2fqp0U2suR0xgrc0fTaNJH" },
+  { title: "Skatiiin", artist: "Swarvy, Pink Siifu", url: "https://open.spotify.com/track/6o1VVxAkcyziXI2T3ginhr" },
+  { title: "Find a Topic (homies begged)", artist: "Isaiah Rashad", url: "https://open.spotify.com/track/17JA4HlieSH7TY3pQk21MJ" },
+  { title: "On the Level", artist: "Mac DeMarco", url: "https://open.spotify.com/track/36rqjSUBaArtMBLWrzwInc" },
+  { title: "Time: The Donut of the Heart", artist: "J Dilla", url: "https://open.spotify.com/track/7oeWitA7Lu8O76NrmhfgZ8" },
+  { title: "House (feat. Mick Jenkins)", artist: "EARTHGANG, Mick Jenkins", url: "https://open.spotify.com/track/0ntHEP3DJyS2qgJgqbWNxh" },
+  { title: "Boblo Boat (feat. J. Cole)", artist: "Royce Da 5'9\", J. Cole", url: "https://open.spotify.com/track/6Gbj7s07M5pF76wfHPOxQZ" },
+  { title: "Biscuit Town", artist: "King Krule", url: "https://open.spotify.com/track/289GrO286LzD5Oa6BXBPel" },
+  { title: "R.I.P. Kevin Miller", artist: "Isaiah Rashad", url: "https://open.spotify.com/track/6zSwnPvoqQ2bzvYMlt3u4u" },
+  { title: "atherton_hifi", artist: "Toro y Moi", url: "https://open.spotify.com/track/0HycNw19wHCEH5V10vA1jF" },
+  { title: "You Stressin'", artist: "Bishop Nehru", url: "https://open.spotify.com/track/60NwuLLD9fpWZcDIfjv1NS" },
+  { title: "Drip", artist: "Luke James, A$AP Ferg", url: "https://open.spotify.com/track/6gn1duUUcXWUZZMIZ4Op4M" },
+  { title: "Lemonade", artist: "Da-P, Mick Jenkins", url: "https://open.spotify.com/track/3taa9MzptO16bBlsgbKt1A" },
+  { title: "Trail Mix", artist: "Terrace Martin, Buddy, Rose Gold", url: "https://open.spotify.com/track/5ylgzfmgEXuWI53ukPoMLn" },
+  { title: "Eternal Light", artist: "Free Nationals, Chronixx", url: "https://open.spotify.com/track/5NM8v7DOexgrrxefEnKR2V" },
+  { title: "The Rivington", artist: "Free Nationals, Conway, Westside Gunn, Joyce Wrice", url: "https://open.spotify.com/track/0erHRpul2OsRSuImLHQ3X4" },
+  { title: "Socially Awkward", artist: "Kiefer", url: "https://open.spotify.com/track/2yE3omg2KMRfFw4ukBlDIJ" },
+  { title: "Go with It (feat. VIC MENSA)", artist: "The Internet, VIC MENSA", url: "https://open.spotify.com/track/5cpB6MXX1RmdVHnTLcKtHC" },
+  { title: "Marcy Me", artist: "JAŸ-Z", url: "https://open.spotify.com/track/5oynsOy80DnodTslgaj3cr" },
+  { title: "Echo (feat. Nas)", artist: "Swizz Beatz, Nas", url: "https://open.spotify.com/track/50sSNm5rq7O6wqvkIn42Zf" },
+  { title: "Marrakech", artist: "Tom Misch", url: "https://open.spotify.com/track/4YLbQGnk6iIgelpUIwbmxm" },
+  { title: "untitled 06 | 06.30.2014.", artist: "Kendrick Lamar", url: "https://open.spotify.com/track/4M2t7bP4Mq87mGMn0PObUX" },
+  { title: "Carefree", artist: "Mick Jenkins", url: "https://open.spotify.com/track/5CTaFr3yPs4SEtCMt70Hfv" },
+  { title: "Sundown Syndrome", artist: "Tame Impala", url: "https://open.spotify.com/track/3ZuT0Evo8chdVM6rPXXqgd" },
+  { title: "Planned Attack", artist: "Quasimoto, Madlib", url: "https://open.spotify.com/track/6em5UF32ahwLxtW1DxIQnf" },
+];
+
+function getDailyTrack() {
+  const now = new Date();
+  const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  return PLAYLIST[dayOfYear % PLAYLIST.length];
+}
+
+function getDateString() {
+  return new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+}
 
 function parseSections(text, labels) {
   const result = {};
@@ -68,30 +89,23 @@ function ResultView({ brief, meta, onBack }) {
   const parsed = parseSections(brief, labels);
   const date = new Date(meta.timestamp || Date.now());
   const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-
   return (
     <div className="brief-view">
       <button className="back-btn" onClick={onBack}>← back</button>
       <div className="brief-chip-row">
-        <span className="chip">
-          {meta.mode === "investor" ? "Investor Prep" : meta.mode === "update" ? "Investor Update" : meta.meetingType}
-        </span>
+        <span className="chip">{meta.mode === "investor" ? "Investor Prep" : meta.mode === "update" ? "Investor Update" : meta.meetingType}</span>
         <span className="chip-time">{dateStr}</span>
       </div>
       <div className="brief-who">{meta.whoTheyAre}</div>
       <div className="sections">
-        {labels.map((label) =>
-          parsed[label] ? (
-            <div key={label} className="section">
-              <div className="section-label">{label}</div>
-              <div className="section-body">
-                {parsed[label].split("\n").filter(l => l.trim()).map((line, i) => (
-                  <p key={i}>{line}</p>
-                ))}
-              </div>
+        {labels.map((label) => parsed[label] ? (
+          <div key={label} className="section">
+            <div className="section-label">{label}</div>
+            <div className="section-body">
+              {parsed[label].split("\n").filter(l => l.trim()).map((line, i) => <p key={i}>{line}</p>)}
             </div>
-          ) : null
-        )}
+          </div>
+        ) : null)}
       </div>
       <button className="print-btn" onClick={() => window.print()}>print ↗</button>
     </div>
@@ -102,14 +116,10 @@ function HistoryItem({ meeting, onClick, onDelete }) {
   const date = new Date(meeting.timestamp);
   const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const cls = meeting.mode === "investor" ? "is-investor" : meeting.mode === "update" ? "is-update" : "";
-
   const handleDelete = (e) => {
     e.stopPropagation();
-    if (window.confirm(`Delete "${meeting.whoTheyAre}"?`)) {
-      onDelete(meeting.id);
-    }
+    if (window.confirm(`Delete "${meeting.whoTheyAre}"?`)) onDelete(meeting.id);
   };
-
   return (
     <div className={`history-item ${cls}`}>
       <button className="history-item-body" onClick={onClick}>
@@ -119,8 +129,23 @@ function HistoryItem({ meeting, onClick, onDelete }) {
         </div>
         <div className="history-type">{meeting.meetingType}</div>
       </button>
-      <button className="history-delete" onClick={handleDelete} aria-label="Delete">×</button>
+      <button className="history-delete" onClick={handleDelete}>×</button>
     </div>
+  );
+}
+
+function SongOfDay() {
+  const track = getDailyTrack();
+  return (
+    <a href={track.url} target="_blank" rel="noopener noreferrer" className="song-strip">
+      <div className="song-icon">♫</div>
+      <div className="song-info">
+        <div className="song-label">today's listen</div>
+        <div className="song-title">{track.title}</div>
+        <div className="song-artist">{track.artist}</div>
+      </div>
+      <div className="song-arrow">↗</div>
+    </a>
   );
 }
 
@@ -134,13 +159,17 @@ export default function Home() {
   const [history, setHistory] = useState([]);
   const [error, setError] = useState(null);
   const [loadingMsg, setLoadingMsg] = useState("Researching...");
+  const [pillStyle, setPillStyle] = useState({ left: 3, width: 80 });
 
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
+  const toggleRef = useRef(null);
+  const btnRefs = useRef([]);
 
   const loadingMessages = ["Researching...", "Reading the room...", "Building the brief...", "Almost there..."];
   const isInvestor = appMode === "investor";
   const isUpdate = appMode === "update";
+  const modeIdx = MODES.indexOf(appMode);
 
   useEffect(() => {
     fetch("/api/generate")
@@ -148,6 +177,15 @@ export default function Home() {
       .then(data => { if (data.meetings) setHistory(data.meetings); })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const btn = btnRefs.current[modeIdx];
+    const parent = toggleRef.current;
+    if (!btn || !parent) return;
+    const btnRect = btn.getBoundingClientRect();
+    const parentRect = parent.getBoundingClientRect();
+    setPillStyle({ left: btnRect.left - parentRect.left - 3 + 3, width: btnRect.width });
+  }, [appMode, modeIdx]);
 
   const switchMode = (mode) => {
     setAppMode(mode);
@@ -161,7 +199,7 @@ export default function Home() {
     if (touchStartX.current === null) return;
     const dx = touchStartX.current - e.changedTouches[0].clientX;
     const dy = Math.abs(touchStartY.current - e.changedTouches[0].clientY);
-    if (Math.abs(dx) < 50 || dy > 60) return; // threshold + ignore vertical
+    if (Math.abs(dx) < 50 || dy > 60) return;
     const currentIdx = MODES.indexOf(appMode);
     if (dx > 0 && currentIdx < MODES.length - 1) switchMode(MODES[currentIdx + 1]);
     if (dx < 0 && currentIdx > 0) switchMode(MODES[currentIdx - 1]);
@@ -177,9 +215,7 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.meetings) setHistory(data.meetings);
-    } catch (err) {
-      console.error("Delete failed", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const handleSubmit = async (e) => {
@@ -207,16 +243,13 @@ export default function Home() {
       const data = await res.json();
       clearInterval(interval);
       if (!res.ok) throw new Error(data.error || "Failed");
-
       const month = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
       const entry = {
         id: data.logId || Date.now(),
         timestamp: new Date().toISOString(),
         mode: appMode,
         meetingType: isUpdate ? "Investor Update" : isInvestor ? `Investor Prep — ${investorForm.conversationStage}` : briefForm.meetingType,
-        whoTheyAre: isUpdate ? month : isInvestor
-          ? (investorForm.partnerName ? `${investorForm.partnerName}, ${investorForm.fundName}` : investorForm.fundName)
-          : briefForm.whoTheyAre,
+        whoTheyAre: isUpdate ? month : isInvestor ? (investorForm.partnerName ? `${investorForm.partnerName}, ${investorForm.fundName}` : investorForm.fundName) : briefForm.whoTheyAre,
         desiredOutcome: isUpdate ? updateForm.theAsk : isInvestor ? investorForm.conversationStage : briefForm.desiredOutcome,
         brief: data.brief,
       };
@@ -231,7 +264,6 @@ export default function Home() {
   };
 
   const modeClass = isInvestor ? "mode-investor" : isUpdate ? "mode-update" : "mode-brief";
-  const modeIdx = MODES.indexOf(appMode);
 
   return (
     <>
@@ -243,8 +275,7 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
       </Head>
 
-      <div
-        className={`app ${modeClass}`}
+      <div className={`app ${modeClass}`}
         onTouchStart={e => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY; }}
         onTouchEnd={handleSwipe}
       >
@@ -267,16 +298,27 @@ export default function Home() {
 
         <main>
           {(view === "form" || view === "loading") && (
-            <div className="mode-toggle-wrap">
-              <div className="mode-toggle">
-                <button className={`toggle-btn ${appMode === "brief" ? "active" : ""}`} onClick={() => switchMode("brief")}>Meeting</button>
-                <button className={`toggle-btn ${appMode === "investor" ? "active" : ""}`} onClick={() => switchMode("investor")}>Investor Prep</button>
-                <button className={`toggle-btn ${appMode === "update" ? "active" : ""}`} onClick={() => switchMode("update")}>Update</button>
+            <>
+              <div className="date-line">{getDateString()}</div>
+              <div className="mode-toggle-wrap">
+                <div className="mode-toggle" ref={toggleRef}>
+                  <div className="toggle-pill" style={{ left: pillStyle.left, width: pillStyle.width }} />
+                  {MODES.map((m, i) => (
+                    <button
+                      key={m}
+                      ref={el => btnRefs.current[i] = el}
+                      className={`toggle-btn ${appMode === m ? "active" : ""}`}
+                      onClick={() => switchMode(m)}
+                    >
+                      {m === "brief" ? "Meeting" : m === "investor" ? "Investor Prep" : "Update"}
+                    </button>
+                  ))}
+                </div>
+                <div className="swipe-dots">
+                  {MODES.map((m, i) => <span key={m} className={`swipe-dot ${i === modeIdx ? "active" : ""}`} />)}
+                </div>
               </div>
-              <div className="swipe-dots">
-                {MODES.map((m, i) => <span key={m} className={`swipe-dot ${i === modeIdx ? "active" : ""}`} />)}
-              </div>
-            </div>
+            </>
           )}
 
           {view === "form" && appMode === "brief" && (
@@ -308,6 +350,7 @@ export default function Home() {
                 {error && <div className="error-msg">{error}</div>}
                 <button type="submit" className="submit-btn">Generate brief →</button>
               </form>
+              <SongOfDay />
             </div>
           )}
 
@@ -340,6 +383,7 @@ export default function Home() {
                 {error && <div className="error-msg">{error}</div>}
                 <button type="submit" className="submit-btn">Generate prep →</button>
               </form>
+              <SongOfDay />
             </div>
           )}
 
@@ -352,7 +396,7 @@ export default function Home() {
               <form onSubmit={handleSubmit}>
                 <div className="field">
                   <label>What happened this month</label>
-                  <textarea placeholder="Bullet points, rough notes, stream of consciousness — anything. What shipped, who you hired, what conversations happened, what changed." value={updateForm.whatHappened} onChange={e => setUpdateForm({ ...updateForm, whatHappened: e.target.value })} required rows={5} />
+                  <textarea placeholder="Bullet points, rough notes, stream of consciousness — anything." value={updateForm.whatHappened} onChange={e => setUpdateForm({ ...updateForm, whatHappened: e.target.value })} required rows={5} />
                 </div>
                 <div className="field">
                   <label>Key numbers (optional)</label>
@@ -365,6 +409,7 @@ export default function Home() {
                 {error && <div className="error-msg">{error}</div>}
                 <button type="submit" className="submit-btn">Generate update →</button>
               </form>
+              <SongOfDay />
             </div>
           )}
 
@@ -396,16 +441,11 @@ export default function Home() {
                   </div>
                   <div className="history-list">
                     {history.map(item => (
-                      <HistoryItem
-                        key={item.id}
-                        meeting={item}
-                        onDelete={handleDelete}
-                        onClick={() => {
-                          setAppMode(item.mode || "brief");
-                          setResult(item);
-                          setView("brief");
-                        }}
-                      />
+                      <HistoryItem key={item.id} meeting={item} onDelete={handleDelete} onClick={() => {
+                        setAppMode(item.mode || "brief");
+                        setResult(item);
+                        setView("brief");
+                      }} />
                     ))}
                   </div>
                 </>
@@ -417,7 +457,6 @@ export default function Home() {
 
       <style jsx global>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         :root {
           --bg: #0c0c0c; --surface: #161616; --border: rgba(255,255,255,0.09);
           --border-active: rgba(255,255,255,0.22); --ink: #e8e4dc;
@@ -425,64 +464,28 @@ export default function Home() {
           --accent: #c8a96e; --accent-dim: rgba(200,169,110,0.15); --red: #e05c5c;
           --mono: 'DM Mono', monospace; --serif: 'Instrument Serif', serif; --r: 12px;
         }
-        .mode-investor {
-          --bg: #f5f2ec; --surface: #ede9e0; --border: rgba(0,0,0,0.09);
-          --border-active: rgba(0,0,0,0.22); --ink: #1a1a1a;
-          --ink-mid: rgba(26,26,26,0.55); --ink-dim: rgba(26,26,26,0.35);
-          --accent: #b8922a; --accent-dim: rgba(184,146,42,0.12); --red: #c0392b;
-        }
-        .mode-update {
-          --bg: #0a0f1a; --surface: #111827; --border: rgba(100,140,255,0.12);
-          --border-active: rgba(100,140,255,0.3); --ink: #e4eaf8;
-          --ink-mid: rgba(228,234,248,0.55); --ink-dim: rgba(228,234,248,0.28);
-          --accent: #7b9cff; --accent-dim: rgba(123,156,255,0.12); --red: #e05c5c;
-        }
+        .mode-investor { --bg: #f5f2ec; --surface: #ede9e0; --border: rgba(0,0,0,0.09); --border-active: rgba(0,0,0,0.22); --ink: #1a1a1a; --ink-mid: rgba(26,26,26,0.55); --ink-dim: rgba(26,26,26,0.35); --accent: #b8922a; --accent-dim: rgba(184,146,42,0.12); --red: #c0392b; }
+        .mode-update { --bg: #0a0f1a; --surface: #111827; --border: rgba(100,140,255,0.12); --border-active: rgba(100,140,255,0.3); --ink: #e4eaf8; --ink-mid: rgba(228,234,248,0.55); --ink-dim: rgba(228,234,248,0.28); --accent: #7b9cff; --accent-dim: rgba(123,156,255,0.12); --red: #e05c5c; }
 
-        html, body {
-          background: var(--bg); color: var(--ink); font-family: var(--mono);
-          font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased;
-          min-height: 100dvh; overscroll-behavior: none;
-          transition: background 0.35s ease, color 0.35s ease;
-        }
-        .app {
-          max-width: 480px; margin: 0 auto; min-height: 100dvh;
-          display: flex; flex-direction: column; background: var(--bg);
-          transition: background 0.35s ease;
-        }
-        header {
-          position: sticky; top: 0; z-index: 100; background: var(--bg);
-          border-bottom: 1px solid var(--border); padding: 0 20px;
-          transition: background 0.35s ease, border-color 0.35s ease;
-        }
+        html, body { background: var(--bg); color: var(--ink); font-family: var(--mono); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100dvh; overscroll-behavior: none; transition: background 0.35s ease, color 0.35s ease; }
+        .app { max-width: 480px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); transition: background 0.35s ease; }
+        header { position: sticky; top: 0; z-index: 100; background: var(--bg); border-bottom: 1px solid var(--border); padding: 0 20px; transition: background 0.35s ease, border-color 0.35s ease; }
         .header-inner { display: flex; justify-content: space-between; align-items: center; height: 56px; }
         .wordmark { display: flex; align-items: baseline; }
         .wm-a { font-family: var(--serif); font-size: 0.88rem; color: var(--ink); opacity: 0.75; }
         .wm-dot { opacity: 0.3; font-size: 0.88rem; margin: 0 6px; }
         .wm-b { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
-        .nav-btn {
-          background: none; border: 1px solid var(--border); color: var(--ink-mid);
-          font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
-          padding: 6px 14px; border-radius: 20px; cursor: pointer;
-          display: flex; align-items: center; gap: 6px; transition: border-color 0.2s, color 0.2s;
-        }
+        .nav-btn { background: none; border: 1px solid var(--border); color: var(--ink-mid); font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em; padding: 6px 14px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
         .badge { background: var(--accent); color: var(--bg); font-size: 0.58rem; border-radius: 10px; padding: 1px 6px; }
-
         main { flex: 1; padding: 28px 20px 80px; }
 
+        .date-line { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); text-align: center; margin-bottom: 16px; }
+
         .mode-toggle-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 32px; gap: 12px; }
-        .mode-toggle {
-          display: flex; background: var(--surface); border: 1px solid var(--border);
-          border-radius: 30px; padding: 3px; gap: 2px;
-          transition: background 0.35s ease, border-color 0.35s ease;
-        }
-        .toggle-btn {
-          font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.08em;
-          text-transform: uppercase; padding: 8px 16px; border-radius: 26px;
-          border: none; background: transparent; color: var(--ink-dim);
-          cursor: pointer; transition: background 0.25s, color 0.25s;
-          -webkit-tap-highlight-color: transparent; white-space: nowrap;
-        }
-        .toggle-btn.active { background: var(--accent); color: var(--bg); }
+        .mode-toggle { position: relative; display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 30px; padding: 3px; gap: 0; transition: background 0.35s ease, border-color 0.35s ease; }
+        .toggle-pill { position: absolute; top: 3px; height: calc(100% - 6px); background: var(--accent); border-radius: 26px; transition: left 0.28s cubic-bezier(0.34,1.56,0.64,1), width 0.28s cubic-bezier(0.34,1.56,0.64,1); pointer-events: none; z-index: 0; }
+        .toggle-btn { position: relative; z-index: 1; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 16px; border-radius: 26px; border: none; background: transparent; color: var(--ink-dim); cursor: pointer; transition: color 0.25s; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+        .toggle-btn.active { color: var(--bg); }
         .swipe-dots { display: flex; gap: 6px; }
         .swipe-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--ink-dim); transition: background 0.25s, transform 0.25s; }
         .swipe-dot.active { background: var(--accent); transform: scale(1.4); }
@@ -499,26 +502,22 @@ export default function Home() {
         .field-hint { font-size: 0.62rem; color: var(--accent); opacity: 0.8; margin-top: 6px; }
         .select-wrap { position: relative; }
         .select-arrow { position: absolute; right: 0; top: 50%; transform: translateY(-50%); color: var(--ink-dim); font-size: 0.72rem; pointer-events: none; }
-        input, textarea, select {
-          width: 100%; background: transparent; border: none;
-          border-bottom: 1px solid var(--border); color: var(--ink);
-          font-family: var(--mono); font-size: 1rem; padding: 10px 0;
-          outline: none; transition: border-color 0.2s;
-          resize: none; appearance: none; -webkit-appearance: none; border-radius: 0;
-        }
+        input, textarea, select { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--ink); font-family: var(--mono); font-size: 1rem; padding: 10px 0; outline: none; transition: border-color 0.2s; resize: none; appearance: none; -webkit-appearance: none; border-radius: 0; }
         input:focus, textarea:focus, select:focus { border-bottom-color: var(--accent); }
         input::placeholder, textarea::placeholder { color: var(--ink-dim); }
         select option { background: var(--surface); color: var(--ink); }
-        .submit-btn {
-          width: 100%; padding: 18px; margin-top: 8px;
-          background: var(--accent-dim); border: 1px solid var(--accent);
-          color: var(--accent); font-family: var(--mono); font-size: 0.82rem;
-          letter-spacing: 0.18em; text-transform: uppercase; border-radius: var(--r);
-          cursor: pointer; -webkit-tap-highlight-color: transparent;
-          transition: background 0.2s, color 0.2s;
-        }
+        .submit-btn { width: 100%; padding: 18px; margin-top: 8px; background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent); font-family: var(--mono); font-size: 0.82rem; letter-spacing: 0.18em; text-transform: uppercase; border-radius: var(--r); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.2s, color 0.2s; }
         .submit-btn:active { background: var(--accent); color: var(--bg); }
         .error-msg { color: var(--red); font-size: 0.72rem; margin-bottom: 16px; }
+
+        .song-strip { display: flex; align-items: center; gap: 14px; margin-top: 40px; padding: 16px; border: 1px solid var(--border); border-radius: var(--r); text-decoration: none; transition: border-color 0.2s; -webkit-tap-highlight-color: transparent; }
+        .song-strip:active { border-color: var(--accent); }
+        .song-icon { font-size: 1.2rem; color: var(--accent); opacity: 0.7; flex-shrink: 0; }
+        .song-info { flex: 1; min-width: 0; }
+        .song-label { font-size: 0.54rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 3px; }
+        .song-title { font-family: var(--serif); font-size: 0.95rem; font-style: italic; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .song-artist { font-size: 0.68rem; color: var(--ink-mid); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .song-arrow { font-size: 0.72rem; color: var(--ink-dim); flex-shrink: 0; }
 
         .loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 40dvh; gap: 24px; }
         .loading-label { font-family: var(--serif); font-size: 1.4rem; font-style: italic; opacity: 0.7; }
@@ -526,7 +525,7 @@ export default function Home() {
         .loading-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1.2s ease-in-out infinite; }
         .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
         .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes blink { 0%, 80%, 100% { opacity: 0.15; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+        @keyframes blink { 0%,80%,100% { opacity: 0.15; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
 
         .brief-view { display: flex; flex-direction: column; }
         .back-btn { background: none; border: none; color: var(--ink-dim); font-family: var(--mono); font-size: 0.72rem; cursor: pointer; padding: 0; margin-bottom: 24px; text-align: left; }
@@ -548,12 +547,7 @@ export default function Home() {
         .stat-num { font-family: var(--serif); font-size: 1.8rem; line-height: 1; margin-bottom: 4px; color: var(--ink); }
         .stat-label { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); }
         .history-list { display: flex; flex-direction: column; gap: 8px; }
-
-        .history-item {
-          display: flex; align-items: stretch;
-          background: var(--surface); border: 1px solid var(--border);
-          border-radius: var(--r); overflow: hidden;
-        }
+        .history-item { display: flex; align-items: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
         .history-item.is-investor { background: #ede9e0; border-color: rgba(0,0,0,0.09); }
         .history-item.is-investor .history-who { color: #1a1a1a; }
         .history-item.is-investor .history-date { color: rgba(26,26,26,0.35); }
@@ -562,26 +556,17 @@ export default function Home() {
         .history-item.is-update .history-who { color: #e4eaf8; }
         .history-item.is-update .history-date { color: rgba(228,234,248,0.35); }
         .history-item.is-update .history-type { color: #7b9cff; }
-
-        .history-item-body {
-          flex: 1; padding: 16px; cursor: pointer; text-align: left;
-          background: none; border: none; -webkit-tap-highlight-color: transparent;
-        }
+        .history-item-body { flex: 1; padding: 16px; cursor: pointer; text-align: left; background: none; border: none; -webkit-tap-highlight-color: transparent; }
         .history-item-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
         .history-who { font-size: 0.9rem; color: var(--ink); }
         .history-date { font-size: 0.62rem; color: var(--ink-dim); }
         .history-type { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); opacity: 0.7; }
-        .history-delete {
-          background: none; border: none; border-left: 1px solid var(--border);
-          color: var(--ink-dim); font-size: 1.1rem; padding: 0 16px;
-          cursor: pointer; -webkit-tap-highlight-color: transparent;
-          transition: color 0.2s, background 0.2s;
-        }
-        .history-delete:active { color: var(--red); background: rgba(224,92,92,0.08); }
+        .history-delete { background: none; border: none; border-left: 1px solid var(--border); color: var(--ink-dim); font-size: 1.1rem; padding: 0 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: color 0.2s; }
+        .history-delete:active { color: var(--red); }
 
         @media print {
           body { background: white; color: black; }
-          header, .back-btn, .print-btn, .mode-toggle-wrap { display: none; }
+          header, .back-btn, .print-btn, .mode-toggle-wrap, .date-line, .song-strip { display: none; }
           .section { border-left-color: #ccc; }
           .section-label { color: #666; }
         }
