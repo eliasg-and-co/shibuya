@@ -137,6 +137,15 @@ export default async function handler(req, res) {
     return res.status(200).json({ meetings });
   }
 
+  if (req.method === "DELETE") {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ error: "ID required" });
+    const history = await getHistory();
+    const updated = history.filter(m => m.id !== id);
+    await saveHistory(updated);
+    return res.status(200).json({ meetings: updated });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -147,25 +156,15 @@ export default async function handler(req, res) {
     if (!whatHappened) {
       return res.status(400).json({ error: "What happened this month is required" });
     }
-
     try {
       const updateMsg = await client.messages.create({
         model: "claude-opus-4-5",
         max_tokens: 900,
         system: INVESTOR_UPDATE_SYSTEM,
-        messages: [{
-          role: "user",
-          content: `WHAT HAPPENED THIS MONTH: ${whatHappened}
-KEY NUMBERS: ${keyNumbers || "None provided"}
-THE ASK: ${theAsk || "None provided"}
-
-Write the investor update.`,
-        }],
+        messages: [{ role: "user", content: `WHAT HAPPENED THIS MONTH: ${whatHappened}\nKEY NUMBERS: ${keyNumbers || "None provided"}\nTHE ASK: ${theAsk || "None provided"}\n\nWrite the investor update.` }],
       });
-
       const update = updateMsg.content.find(b => b.type === "text")?.text;
       if (!update) throw new Error("No response");
-
       const entry = {
         id: Date.now(),
         timestamp: new Date().toISOString(),
@@ -175,11 +174,9 @@ Write the investor update.`,
         desiredOutcome: theAsk || "Monthly update",
         brief: update,
       };
-
       const history = await getHistory();
       history.unshift(entry);
       await saveHistory(history.slice(0, 100));
-
       return res.status(200).json({ brief: update, logId: entry.id });
     } catch (err) {
       console.error(err);
@@ -191,10 +188,8 @@ Write the investor update.`,
     if (!fundName || !conversationStage) {
       return res.status(400).json({ error: "Fund name and conversation stage required" });
     }
-
     let researchContext = "";
     const searchQuery = partnerName ? `${partnerName} ${fundName}` : fundName;
-
     try {
       const researchMsg = await client.messages.create({
         model: "claude-opus-4-5",
@@ -207,7 +202,6 @@ Write the investor update.`,
     } catch (err) {
       researchContext = `Fund: ${fundName}${partnerName ? `, Partner: ${partnerName}` : ""}`;
     }
-
     try {
       const prepMsg = await client.messages.create({
         model: "claude-opus-4-5",
@@ -215,10 +209,8 @@ Write the investor update.`,
         system: INVESTOR_PREP_SYSTEM,
         messages: [{ role: "user", content: `FUND: ${fundName}\nPARTNER: ${partnerName || "Not specified"}\nSTAGE: ${conversationStage}\nCONTEXT: ${researchContext}` }],
       });
-
       const prep = prepMsg.content.find(b => b.type === "text")?.text;
       if (!prep) throw new Error("No response");
-
       const entry = {
         id: Date.now(),
         timestamp: new Date().toISOString(),
@@ -228,11 +220,9 @@ Write the investor update.`,
         desiredOutcome: conversationStage,
         brief: prep,
       };
-
       const history = await getHistory();
       history.unshift(entry);
       await saveHistory(history.slice(0, 100));
-
       return res.status(200).json({ brief: prep, logId: entry.id });
     } catch (err) {
       console.error(err);
@@ -243,7 +233,6 @@ Write the investor update.`,
   if (!meetingType || !whoTheyAre || !desiredOutcome) {
     return res.status(400).json({ error: "All fields required" });
   }
-
   let researchContext = "";
   try {
     const researchMsg = await client.messages.create({
@@ -257,7 +246,6 @@ Write the investor update.`,
   } catch (err) {
     researchContext = `${meetingType} with ${whoTheyAre}`;
   }
-
   try {
     const briefMsg = await client.messages.create({
       model: "claude-opus-4-5",
@@ -265,10 +253,8 @@ Write the investor update.`,
       system: BRIEF_SYSTEM,
       messages: [{ role: "user", content: `MEETING TYPE: ${meetingType}\nWHO: ${whoTheyAre}\nCONTEXT: ${researchContext}\nOUTCOME: ${desiredOutcome}` }],
     });
-
     const brief = briefMsg.content.find(b => b.type === "text")?.text;
     if (!brief) throw new Error("No response");
-
     const entry = {
       id: Date.now(),
       timestamp: new Date().toISOString(),
@@ -278,11 +264,9 @@ Write the investor update.`,
       desiredOutcome,
       brief,
     };
-
     const history = await getHistory();
     history.unshift(entry);
     await saveHistory(history.slice(0, 100));
-
     return res.status(200).json({ brief, logId: entry.id });
   } catch (err) {
     console.error(err);

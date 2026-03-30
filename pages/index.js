@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 
 const MEETING_TYPES = [
@@ -41,6 +41,8 @@ const UPDATE_LABELS = [
   "WHAT'S NEXT",
   "THE ASK",
 ];
+
+const MODES = ["brief", "investor", "update"];
 
 function parseSections(text, labels) {
   const result = {};
@@ -96,18 +98,29 @@ function ResultView({ brief, meta, onBack }) {
   );
 }
 
-function HistoryItem({ meeting, onClick }) {
+function HistoryItem({ meeting, onClick, onDelete }) {
   const date = new Date(meeting.timestamp);
   const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const cls = meeting.mode === "investor" ? "is-investor" : meeting.mode === "update" ? "is-update" : "";
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    if (window.confirm(`Delete "${meeting.whoTheyAre}"?`)) {
+      onDelete(meeting.id);
+    }
+  };
+
   return (
-    <button className={`history-item ${cls}`} onClick={onClick}>
-      <div className="history-item-top">
-        <span className="history-who">{meeting.whoTheyAre}</span>
-        <span className="history-date">{dateStr}</span>
-      </div>
-      <div className="history-type">{meeting.meetingType}</div>
-    </button>
+    <div className={`history-item ${cls}`}>
+      <button className="history-item-body" onClick={onClick}>
+        <div className="history-item-top">
+          <span className="history-who">{meeting.whoTheyAre}</span>
+          <span className="history-date">{dateStr}</span>
+        </div>
+        <div className="history-type">{meeting.meetingType}</div>
+      </button>
+      <button className="history-delete" onClick={handleDelete} aria-label="Delete">×</button>
+    </div>
   );
 }
 
@@ -121,6 +134,9 @@ export default function Home() {
   const [history, setHistory] = useState([]);
   const [error, setError] = useState(null);
   const [loadingMsg, setLoadingMsg] = useState("Researching...");
+
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
 
   const loadingMessages = ["Researching...", "Reading the room...", "Building the brief...", "Almost there..."];
   const isInvestor = appMode === "investor";
@@ -140,6 +156,32 @@ export default function Home() {
     setResult(null);
   };
 
+  const handleSwipe = (e) => {
+    if (view !== "form" && view !== "loading") return;
+    if (touchStartX.current === null) return;
+    const dx = touchStartX.current - e.changedTouches[0].clientX;
+    const dy = Math.abs(touchStartY.current - e.changedTouches[0].clientY);
+    if (Math.abs(dx) < 50 || dy > 60) return; // threshold + ignore vertical
+    const currentIdx = MODES.indexOf(appMode);
+    if (dx > 0 && currentIdx < MODES.length - 1) switchMode(MODES[currentIdx + 1]);
+    if (dx < 0 && currentIdx > 0) switchMode(MODES[currentIdx - 1]);
+    touchStartX.current = null;
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch("/api/generate", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (data.meetings) setHistory(data.meetings);
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -152,13 +194,9 @@ export default function Home() {
     }, 2800);
 
     let payload;
-    if (isUpdate) {
-      payload = { mode: "update", ...updateForm };
-    } else if (isInvestor) {
-      payload = { mode: "investor", ...investorForm };
-    } else {
-      payload = { mode: "brief", ...briefForm };
-    }
+    if (isUpdate) payload = { mode: "update", ...updateForm };
+    else if (isInvestor) payload = { mode: "investor", ...investorForm };
+    else payload = { mode: "brief", ...briefForm };
 
     try {
       const res = await fetch("/api/generate", {
@@ -193,6 +231,7 @@ export default function Home() {
   };
 
   const modeClass = isInvestor ? "mode-investor" : isUpdate ? "mode-update" : "mode-brief";
+  const modeIdx = MODES.indexOf(appMode);
 
   return (
     <>
@@ -204,7 +243,11 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
       </Head>
 
-      <div className={`app ${modeClass}`}>
+      <div
+        className={`app ${modeClass}`}
+        onTouchStart={e => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY; }}
+        onTouchEnd={handleSwipe}
+      >
         <header>
           <div className="header-inner">
             <div className="wordmark">
@@ -226,20 +269,16 @@ export default function Home() {
           {(view === "form" || view === "loading") && (
             <div className="mode-toggle-wrap">
               <div className="mode-toggle">
-                <button className={`toggle-btn ${appMode === "brief" ? "active" : ""}`} onClick={() => switchMode("brief")}>
-                  Meeting
-                </button>
-                <button className={`toggle-btn ${appMode === "investor" ? "active" : ""}`} onClick={() => switchMode("investor")}>
-                  Investor Prep
-                </button>
-                <button className={`toggle-btn ${appMode === "update" ? "active" : ""}`} onClick={() => switchMode("update")}>
-                  Update
-                </button>
+                <button className={`toggle-btn ${appMode === "brief" ? "active" : ""}`} onClick={() => switchMode("brief")}>Meeting</button>
+                <button className={`toggle-btn ${appMode === "investor" ? "active" : ""}`} onClick={() => switchMode("investor")}>Investor Prep</button>
+                <button className={`toggle-btn ${appMode === "update" ? "active" : ""}`} onClick={() => switchMode("update")}>Update</button>
+              </div>
+              <div className="swipe-dots">
+                {MODES.map((m, i) => <span key={m} className={`swipe-dot ${i === modeIdx ? "active" : ""}`} />)}
               </div>
             </div>
           )}
 
-          {/* MEETING BRIEF FORM */}
           {view === "form" && appMode === "brief" && (
             <div className="fade-in">
               <div className="form-intro">
@@ -272,7 +311,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* INVESTOR PREP FORM */}
           {view === "form" && appMode === "investor" && (
             <div className="fade-in">
               <div className="form-intro">
@@ -305,7 +343,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* INVESTOR UPDATE FORM */}
           {view === "form" && appMode === "update" && (
             <div className="fade-in">
               <div className="form-intro">
@@ -315,31 +352,15 @@ export default function Home() {
               <form onSubmit={handleSubmit}>
                 <div className="field">
                   <label>What happened this month</label>
-                  <textarea
-                    placeholder="Bullet points, rough notes, stream of consciousness — anything. What shipped, who you hired, what conversations happened, what changed."
-                    value={updateForm.whatHappened}
-                    onChange={e => setUpdateForm({ ...updateForm, whatHappened: e.target.value })}
-                    required
-                    rows={5}
-                  />
+                  <textarea placeholder="Bullet points, rough notes, stream of consciousness — anything. What shipped, who you hired, what conversations happened, what changed." value={updateForm.whatHappened} onChange={e => setUpdateForm({ ...updateForm, whatHappened: e.target.value })} required rows={5} />
                 </div>
                 <div className="field">
                   <label>Key numbers (optional)</label>
-                  <textarea
-                    placeholder="Users, demos booked, MRR, anything you're tracking"
-                    value={updateForm.keyNumbers}
-                    onChange={e => setUpdateForm({ ...updateForm, keyNumbers: e.target.value })}
-                    rows={2}
-                  />
+                  <textarea placeholder="Users, demos booked, MRR, anything you're tracking" value={updateForm.keyNumbers} onChange={e => setUpdateForm({ ...updateForm, keyNumbers: e.target.value })} rows={2} />
                 </div>
                 <div className="field">
                   <label>The ask</label>
-                  <textarea
-                    placeholder="What do you need from your investor network right now? Intros, candidates, advice."
-                    value={updateForm.theAsk}
-                    onChange={e => setUpdateForm({ ...updateForm, theAsk: e.target.value })}
-                    rows={2}
-                  />
+                  <textarea placeholder="What do you need from your investor network right now?" value={updateForm.theAsk} onChange={e => setUpdateForm({ ...updateForm, theAsk: e.target.value })} rows={2} />
                 </div>
                 {error && <div className="error-msg">{error}</div>}
                 <button type="submit" className="submit-btn">Generate update →</button>
@@ -347,7 +368,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* LOADING */}
           {view === "loading" && (
             <div className="loading-wrap fade-in">
               <div className="loading-label">{loadingMsg}</div>
@@ -355,14 +375,12 @@ export default function Home() {
             </div>
           )}
 
-          {/* RESULT */}
           {view === "brief" && result && (
             <div className="fade-in">
               <ResultView brief={result.brief} meta={result} onBack={() => setView("form")} />
             </div>
           )}
 
-          {/* HISTORY */}
           {view === "history" && (
             <div className="fade-in">
               <div className="history-head">
@@ -378,11 +396,16 @@ export default function Home() {
                   </div>
                   <div className="history-list">
                     {history.map(item => (
-                      <HistoryItem key={item.id} meeting={item} onClick={() => {
-                        setAppMode(item.mode || "brief");
-                        setResult(item);
-                        setView("brief");
-                      }} />
+                      <HistoryItem
+                        key={item.id}
+                        meeting={item}
+                        onDelete={handleDelete}
+                        onClick={() => {
+                          setAppMode(item.mode || "brief");
+                          setResult(item);
+                          setView("brief");
+                        }}
+                      />
                     ))}
                   </div>
                 </>
@@ -396,73 +419,39 @@ export default function Home() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --bg: #0c0c0c;
-          --surface: #161616;
-          --border: rgba(255,255,255,0.09);
-          --border-active: rgba(255,255,255,0.22);
-          --ink: #e8e4dc;
-          --ink-mid: rgba(232,228,220,0.55);
-          --ink-dim: rgba(232,228,220,0.28);
-          --accent: #c8a96e;
-          --accent-dim: rgba(200,169,110,0.15);
-          --red: #e05c5c;
-          --mono: 'DM Mono', monospace;
-          --serif: 'Instrument Serif', serif;
-          --r: 12px;
+          --bg: #0c0c0c; --surface: #161616; --border: rgba(255,255,255,0.09);
+          --border-active: rgba(255,255,255,0.22); --ink: #e8e4dc;
+          --ink-mid: rgba(232,228,220,0.55); --ink-dim: rgba(232,228,220,0.28);
+          --accent: #c8a96e; --accent-dim: rgba(200,169,110,0.15); --red: #e05c5c;
+          --mono: 'DM Mono', monospace; --serif: 'Instrument Serif', serif; --r: 12px;
         }
-
         .mode-investor {
-          --bg: #f5f2ec;
-          --surface: #ede9e0;
-          --border: rgba(0,0,0,0.09);
-          --border-active: rgba(0,0,0,0.22);
-          --ink: #1a1a1a;
-          --ink-mid: rgba(26,26,26,0.55);
-          --ink-dim: rgba(26,26,26,0.35);
-          --accent: #b8922a;
-          --accent-dim: rgba(184,146,42,0.12);
-          --red: #c0392b;
+          --bg: #f5f2ec; --surface: #ede9e0; --border: rgba(0,0,0,0.09);
+          --border-active: rgba(0,0,0,0.22); --ink: #1a1a1a;
+          --ink-mid: rgba(26,26,26,0.55); --ink-dim: rgba(26,26,26,0.35);
+          --accent: #b8922a; --accent-dim: rgba(184,146,42,0.12); --red: #c0392b;
         }
-
         .mode-update {
-          --bg: #0a0f1a;
-          --surface: #111827;
-          --border: rgba(100,140,255,0.12);
-          --border-active: rgba(100,140,255,0.3);
-          --ink: #e4eaf8;
-          --ink-mid: rgba(228,234,248,0.55);
-          --ink-dim: rgba(228,234,248,0.28);
-          --accent: #7b9cff;
-          --accent-dim: rgba(123,156,255,0.12);
-          --red: #e05c5c;
+          --bg: #0a0f1a; --surface: #111827; --border: rgba(100,140,255,0.12);
+          --border-active: rgba(100,140,255,0.3); --ink: #e4eaf8;
+          --ink-mid: rgba(228,234,248,0.55); --ink-dim: rgba(228,234,248,0.28);
+          --accent: #7b9cff; --accent-dim: rgba(123,156,255,0.12); --red: #e05c5c;
         }
 
         html, body {
-          background: var(--bg);
-          color: var(--ink);
-          font-family: var(--mono);
-          font-size: 16px;
-          line-height: 1.6;
-          -webkit-font-smoothing: antialiased;
-          min-height: 100dvh;
-          overscroll-behavior: none;
+          background: var(--bg); color: var(--ink); font-family: var(--mono);
+          font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+          min-height: 100dvh; overscroll-behavior: none;
           transition: background 0.35s ease, color 0.35s ease;
         }
-
         .app {
-          max-width: 480px;
-          margin: 0 auto;
-          min-height: 100dvh;
-          display: flex;
-          flex-direction: column;
-          background: var(--bg);
+          max-width: 480px; margin: 0 auto; min-height: 100dvh;
+          display: flex; flex-direction: column; background: var(--bg);
           transition: background 0.35s ease;
         }
-
         header {
-          position: sticky; top: 0; z-index: 100;
-          background: var(--bg); border-bottom: 1px solid var(--border);
-          padding: 0 20px;
+          position: sticky; top: 0; z-index: 100; background: var(--bg);
+          border-bottom: 1px solid var(--border); padding: 0 20px;
           transition: background 0.35s ease, border-color 0.35s ease;
         }
         .header-inner { display: flex; justify-content: space-between; align-items: center; height: 56px; }
@@ -474,14 +463,13 @@ export default function Home() {
           background: none; border: 1px solid var(--border); color: var(--ink-mid);
           font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
           padding: 6px 14px; border-radius: 20px; cursor: pointer;
-          display: flex; align-items: center; gap: 6px;
-          transition: border-color 0.2s, color 0.2s;
+          display: flex; align-items: center; gap: 6px; transition: border-color 0.2s, color 0.2s;
         }
         .badge { background: var(--accent); color: var(--bg); font-size: 0.58rem; border-radius: 10px; padding: 1px 6px; }
 
         main { flex: 1; padding: 28px 20px 80px; }
 
-        .mode-toggle-wrap { display: flex; justify-content: center; margin-bottom: 36px; }
+        .mode-toggle-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 32px; gap: 12px; }
         .mode-toggle {
           display: flex; background: var(--surface); border: 1px solid var(--border);
           border-radius: 30px; padding: 3px; gap: 2px;
@@ -495,6 +483,9 @@ export default function Home() {
           -webkit-tap-highlight-color: transparent; white-space: nowrap;
         }
         .toggle-btn.active { background: var(--accent); color: var(--bg); }
+        .swipe-dots { display: flex; gap: 6px; }
+        .swipe-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--ink-dim); transition: background 0.25s, transform 0.25s; }
+        .swipe-dot.active { background: var(--accent); transform: scale(1.4); }
 
         .fade-in { animation: fadeUp 0.35s ease forwards; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -522,9 +513,8 @@ export default function Home() {
           width: 100%; padding: 18px; margin-top: 8px;
           background: var(--accent-dim); border: 1px solid var(--accent);
           color: var(--accent); font-family: var(--mono); font-size: 0.82rem;
-          letter-spacing: 0.18em; text-transform: uppercase;
-          border-radius: var(--r); cursor: pointer;
-          -webkit-tap-highlight-color: transparent;
+          letter-spacing: 0.18em; text-transform: uppercase; border-radius: var(--r);
+          cursor: pointer; -webkit-tap-highlight-color: transparent;
           transition: background 0.2s, color 0.2s;
         }
         .submit-btn:active { background: var(--accent); color: var(--bg); }
@@ -543,7 +533,7 @@ export default function Home() {
         .brief-chip-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .chip { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); opacity: 0.85; }
         .chip-time { font-size: 0.62rem; color: var(--ink-dim); }
-        .brief-who { font-family: var(--serif); font-size: 1.6rem; font-style: italic; letter-spacing: -0.01em; margin-bottom: 32px; line-height: 1.2; color: var(--ink); opacity: 1; }
+        .brief-who { font-family: var(--serif); font-size: 1.6rem; font-style: italic; letter-spacing: -0.01em; margin-bottom: 32px; line-height: 1.2; color: var(--ink); }
         .sections { display: flex; flex-direction: column; gap: 28px; margin-bottom: 40px; }
         .section { border-left: 2px solid var(--border); padding-left: 16px; }
         .section-label { font-size: 0.56rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; opacity: 0.85; }
@@ -554,11 +544,16 @@ export default function Home() {
         .history-head h2 { font-family: var(--serif); font-size: 1.5rem; font-style: italic; margin-bottom: 8px; color: var(--ink); }
         .history-empty { font-size: 0.8rem; color: var(--ink-dim); }
         .history-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 28px; }
-        .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 12px; text-align: center; transition: background 0.35s ease; }
+        .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 12px; text-align: center; }
         .stat-num { font-family: var(--serif); font-size: 1.8rem; line-height: 1; margin-bottom: 4px; color: var(--ink); }
         .stat-label { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); }
         .history-list { display: flex; flex-direction: column; gap: 8px; }
-        .history-item { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; transition: background 0.35s ease; }
+
+        .history-item {
+          display: flex; align-items: stretch;
+          background: var(--surface); border: 1px solid var(--border);
+          border-radius: var(--r); overflow: hidden;
+        }
         .history-item.is-investor { background: #ede9e0; border-color: rgba(0,0,0,0.09); }
         .history-item.is-investor .history-who { color: #1a1a1a; }
         .history-item.is-investor .history-date { color: rgba(26,26,26,0.35); }
@@ -567,10 +562,22 @@ export default function Home() {
         .history-item.is-update .history-who { color: #e4eaf8; }
         .history-item.is-update .history-date { color: rgba(228,234,248,0.35); }
         .history-item.is-update .history-type { color: #7b9cff; }
+
+        .history-item-body {
+          flex: 1; padding: 16px; cursor: pointer; text-align: left;
+          background: none; border: none; -webkit-tap-highlight-color: transparent;
+        }
         .history-item-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
         .history-who { font-size: 0.9rem; color: var(--ink); }
         .history-date { font-size: 0.62rem; color: var(--ink-dim); }
         .history-type { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); opacity: 0.7; }
+        .history-delete {
+          background: none; border: none; border-left: 1px solid var(--border);
+          color: var(--ink-dim); font-size: 1.1rem; padding: 0 16px;
+          cursor: pointer; -webkit-tap-highlight-color: transparent;
+          transition: color 0.2s, background 0.2s;
+        }
+        .history-delete:active { color: var(--red); background: rgba(224,92,92,0.08); }
 
         @media print {
           body { background: white; color: black; }
