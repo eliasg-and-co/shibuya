@@ -34,6 +34,14 @@ const PREP_LABELS = [
   "WHAT THEY'RE REALLY ASKING",
 ];
 
+const UPDATE_LABELS = [
+  "THE MONTH IN ONE LINE",
+  "WHAT HAPPENED",
+  "THE NUMBERS",
+  "WHAT'S NEXT",
+  "THE ASK",
+];
+
 function parseSections(text, labels) {
   const result = {};
   labels.forEach((label, idx) => {
@@ -47,8 +55,14 @@ function parseSections(text, labels) {
   return result;
 }
 
-function ResultView({ brief, meta, onBack, isInvestor }) {
-  const labels = isInvestor ? PREP_LABELS : BRIEF_LABELS;
+function getLabelsForMode(mode) {
+  if (mode === "investor") return PREP_LABELS;
+  if (mode === "update") return UPDATE_LABELS;
+  return BRIEF_LABELS;
+}
+
+function ResultView({ brief, meta, onBack }) {
+  const labels = getLabelsForMode(meta.mode);
   const parsed = parseSections(brief, labels);
   const date = new Date(meta.timestamp || Date.now());
   const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -57,7 +71,9 @@ function ResultView({ brief, meta, onBack, isInvestor }) {
     <div className="brief-view">
       <button className="back-btn" onClick={onBack}>← back</button>
       <div className="brief-chip-row">
-        <span className="chip">{isInvestor ? "Investor Prep" : meta.meetingType}</span>
+        <span className="chip">
+          {meta.mode === "investor" ? "Investor Prep" : meta.mode === "update" ? "Investor Update" : meta.meetingType}
+        </span>
         <span className="chip-time">{dateStr}</span>
       </div>
       <div className="brief-who">{meta.whoTheyAre}</div>
@@ -83,8 +99,9 @@ function ResultView({ brief, meta, onBack, isInvestor }) {
 function HistoryItem({ meeting, onClick }) {
   const date = new Date(meeting.timestamp);
   const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const cls = meeting.mode === "investor" ? "is-investor" : meeting.mode === "update" ? "is-update" : "";
   return (
-    <button className={`history-item ${meeting.mode === "investor" ? "is-investor" : ""}`} onClick={onClick}>
+    <button className={`history-item ${cls}`} onClick={onClick}>
       <div className="history-item-top">
         <span className="history-who">{meeting.whoTheyAre}</span>
         <span className="history-date">{dateStr}</span>
@@ -99,6 +116,7 @@ export default function Home() {
   const [view, setView] = useState("form");
   const [briefForm, setBriefForm] = useState({ meetingType: "", whoTheyAre: "", desiredOutcome: "" });
   const [investorForm, setInvestorForm] = useState({ fundName: "", partnerName: "", conversationStage: "" });
+  const [updateForm, setUpdateForm] = useState({ whatHappened: "", keyNumbers: "", theAsk: "" });
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
   const [error, setError] = useState(null);
@@ -106,8 +124,8 @@ export default function Home() {
 
   const loadingMessages = ["Researching...", "Reading the room...", "Building the brief...", "Almost there..."];
   const isInvestor = appMode === "investor";
+  const isUpdate = appMode === "update";
 
-  // Load persistent history on mount
   useEffect(() => {
     fetch("/api/generate")
       .then(r => r.json())
@@ -133,9 +151,14 @@ export default function Home() {
       setLoadingMsg(loadingMessages[msgIdx]);
     }, 2800);
 
-    const payload = isInvestor
-      ? { mode: "investor", ...investorForm }
-      : { mode: "brief", ...briefForm };
+    let payload;
+    if (isUpdate) {
+      payload = { mode: "update", ...updateForm };
+    } else if (isInvestor) {
+      payload = { mode: "investor", ...investorForm };
+    } else {
+      payload = { mode: "brief", ...briefForm };
+    }
 
     try {
       const res = await fetch("/api/generate", {
@@ -147,15 +170,16 @@ export default function Home() {
       clearInterval(interval);
       if (!res.ok) throw new Error(data.error || "Failed");
 
+      const month = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
       const entry = {
         id: data.logId || Date.now(),
         timestamp: new Date().toISOString(),
         mode: appMode,
-        meetingType: isInvestor ? `Investor Prep — ${investorForm.conversationStage}` : briefForm.meetingType,
-        whoTheyAre: isInvestor
+        meetingType: isUpdate ? "Investor Update" : isInvestor ? `Investor Prep — ${investorForm.conversationStage}` : briefForm.meetingType,
+        whoTheyAre: isUpdate ? month : isInvestor
           ? (investorForm.partnerName ? `${investorForm.partnerName}, ${investorForm.fundName}` : investorForm.fundName)
           : briefForm.whoTheyAre,
-        desiredOutcome: isInvestor ? investorForm.conversationStage : briefForm.desiredOutcome,
+        desiredOutcome: isUpdate ? updateForm.theAsk : isInvestor ? investorForm.conversationStage : briefForm.desiredOutcome,
         brief: data.brief,
       };
       setResult(entry);
@@ -168,6 +192,8 @@ export default function Home() {
     }
   };
 
+  const modeClass = isInvestor ? "mode-investor" : isUpdate ? "mode-update" : "mode-brief";
+
   return (
     <>
       <Head>
@@ -178,7 +204,7 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
       </Head>
 
-      <div className={`app ${isInvestor ? "mode-investor" : "mode-brief"}`}>
+      <div className={`app ${modeClass}`}>
         <header>
           <div className="header-inner">
             <div className="wordmark">
@@ -200,23 +226,21 @@ export default function Home() {
           {(view === "form" || view === "loading") && (
             <div className="mode-toggle-wrap">
               <div className="mode-toggle">
-                <button
-                  className={`toggle-btn ${!isInvestor ? "active" : ""}`}
-                  onClick={() => switchMode("brief")}
-                >
-                  Meeting Brief
+                <button className={`toggle-btn ${appMode === "brief" ? "active" : ""}`} onClick={() => switchMode("brief")}>
+                  Meeting
                 </button>
-                <button
-                  className={`toggle-btn ${isInvestor ? "active" : ""}`}
-                  onClick={() => switchMode("investor")}
-                >
+                <button className={`toggle-btn ${appMode === "investor" ? "active" : ""}`} onClick={() => switchMode("investor")}>
                   Investor Prep
+                </button>
+                <button className={`toggle-btn ${appMode === "update" ? "active" : ""}`} onClick={() => switchMode("update")}>
+                  Update
                 </button>
               </div>
             </div>
           )}
 
-          {view === "form" && !isInvestor && (
+          {/* MEETING BRIEF FORM */}
+          {view === "form" && appMode === "brief" && (
             <div className="fade-in">
               <div className="form-intro">
                 <h1>Who are you<br /><em>walking into?</em></h1>
@@ -248,7 +272,8 @@ export default function Home() {
             </div>
           )}
 
-          {view === "form" && isInvestor && (
+          {/* INVESTOR PREP FORM */}
+          {view === "form" && appMode === "investor" && (
             <div className="fade-in">
               <div className="form-intro">
                 <h1>Who's writing<br /><em>the check?</em></h1>
@@ -280,6 +305,49 @@ export default function Home() {
             </div>
           )}
 
+          {/* INVESTOR UPDATE FORM */}
+          {view === "form" && appMode === "update" && (
+            <div className="fade-in">
+              <div className="form-intro">
+                <h1>What moved<br /><em>this month?</em></h1>
+                <p className="form-sub">Rough notes in. Polished update out.</p>
+              </div>
+              <form onSubmit={handleSubmit}>
+                <div className="field">
+                  <label>What happened this month</label>
+                  <textarea
+                    placeholder="Bullet points, rough notes, stream of consciousness — anything. What shipped, who you hired, what conversations happened, what changed."
+                    value={updateForm.whatHappened}
+                    onChange={e => setUpdateForm({ ...updateForm, whatHappened: e.target.value })}
+                    required
+                    rows={5}
+                  />
+                </div>
+                <div className="field">
+                  <label>Key numbers (optional)</label>
+                  <textarea
+                    placeholder="Users, demos booked, MRR, anything you're tracking"
+                    value={updateForm.keyNumbers}
+                    onChange={e => setUpdateForm({ ...updateForm, keyNumbers: e.target.value })}
+                    rows={2}
+                  />
+                </div>
+                <div className="field">
+                  <label>The ask</label>
+                  <textarea
+                    placeholder="What do you need from your investor network right now? Intros, candidates, advice."
+                    value={updateForm.theAsk}
+                    onChange={e => setUpdateForm({ ...updateForm, theAsk: e.target.value })}
+                    rows={2}
+                  />
+                </div>
+                {error && <div className="error-msg">{error}</div>}
+                <button type="submit" className="submit-btn">Generate update →</button>
+              </form>
+            </div>
+          )}
+
+          {/* LOADING */}
           {view === "loading" && (
             <div className="loading-wrap fade-in">
               <div className="loading-label">{loadingMsg}</div>
@@ -287,17 +355,14 @@ export default function Home() {
             </div>
           )}
 
+          {/* RESULT */}
           {view === "brief" && result && (
             <div className="fade-in">
-              <ResultView
-                brief={result.brief}
-                meta={result}
-                isInvestor={result.mode === "investor"}
-                onBack={() => setView("form")}
-              />
+              <ResultView brief={result.brief} meta={result} onBack={() => setView("form")} />
             </div>
           )}
 
+          {/* HISTORY */}
           {view === "history" && (
             <div className="fade-in">
               <div className="history-head">
@@ -359,6 +424,19 @@ export default function Home() {
           --red: #c0392b;
         }
 
+        .mode-update {
+          --bg: #0a0f1a;
+          --surface: #111827;
+          --border: rgba(100,140,255,0.12);
+          --border-active: rgba(100,140,255,0.3);
+          --ink: #e4eaf8;
+          --ink-mid: rgba(228,234,248,0.55);
+          --ink-dim: rgba(228,234,248,0.28);
+          --accent: #7b9cff;
+          --accent-dim: rgba(123,156,255,0.12);
+          --red: #e05c5c;
+        }
+
         html, body {
           background: var(--bg);
           color: var(--ink);
@@ -410,11 +488,11 @@ export default function Home() {
           transition: background 0.35s ease, border-color 0.35s ease;
         }
         .toggle-btn {
-          font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
-          text-transform: uppercase; padding: 8px 20px; border-radius: 26px;
+          font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.08em;
+          text-transform: uppercase; padding: 8px 16px; border-radius: 26px;
           border: none; background: transparent; color: var(--ink-dim);
           cursor: pointer; transition: background 0.25s, color 0.25s;
-          -webkit-tap-highlight-color: transparent;
+          -webkit-tap-highlight-color: transparent; white-space: nowrap;
         }
         .toggle-btn.active { background: var(--accent); color: var(--bg); }
 
@@ -485,6 +563,10 @@ export default function Home() {
         .history-item.is-investor .history-who { color: #1a1a1a; }
         .history-item.is-investor .history-date { color: rgba(26,26,26,0.35); }
         .history-item.is-investor .history-type { color: #b8922a; }
+        .history-item.is-update { background: #111827; border-color: rgba(100,140,255,0.15); }
+        .history-item.is-update .history-who { color: #e4eaf8; }
+        .history-item.is-update .history-date { color: rgba(228,234,248,0.35); }
+        .history-item.is-update .history-type { color: #7b9cff; }
         .history-item-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
         .history-who { font-size: 0.9rem; color: var(--ink); }
         .history-date { font-size: 0.62rem; color: var(--ink-dim); }

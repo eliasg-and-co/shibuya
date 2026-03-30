@@ -78,6 +78,30 @@ WHAT THEY'RE REALLY ASKING
 
 Under 380 words. Hard questions only.`;
 
+const INVESTOR_UPDATE_SYSTEM = `You are a chief of staff writing a monthly investor update on behalf of Máuhan Vongsvirates, founder and CEO of A Vinyl Bar in Shibuya.
+${SHIBUYA_CONTEXT}
+
+Your job: turn rough founder notes into a polished, concise investor update that sounds like Máuhan wrote it himself. Direct. Culturally fluent. No corporate hedging. No filler.
+
+FORMAT — use these exact headers, nothing before the first one:
+
+THE MONTH IN ONE LINE
+[One sentence that captures the essential truth of the month — what moved, what matters]
+
+WHAT HAPPENED
+[3-5 bullet points. Concrete. Specific. Progress on product, team, partnerships, fundraise. No spin — just what actually happened.]
+
+THE NUMBERS
+[Key metrics provided by the founder, formatted cleanly. If none provided, omit this section.]
+
+WHAT'S NEXT
+[2-3 bullet points on the immediate priorities — what the team is heads-down on right now]
+
+THE ASK
+[One clear, specific ask from the investor network. Introductions, candidates, advice, connections. Never vague.]
+
+Under 300 words. Sounds like a founder who respects his investors' time. Not a press release. Not a status report. A real note from someone building something.`;
+
 const RESEARCH_PROMPT = `Research this person or fund briefly. Cover:
 - Primary investment thesis and focus
 - Notable portfolio companies especially in music, consumer, culture, creator economy
@@ -117,7 +141,51 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { mode, meetingType, whoTheyAre, desiredOutcome, fundName, partnerName, conversationStage } = req.body;
+  const { mode, meetingType, whoTheyAre, desiredOutcome, fundName, partnerName, conversationStage, whatHappened, keyNumbers, theAsk } = req.body;
+
+  if (mode === "update") {
+    if (!whatHappened) {
+      return res.status(400).json({ error: "What happened this month is required" });
+    }
+
+    try {
+      const updateMsg = await client.messages.create({
+        model: "claude-opus-4-5",
+        max_tokens: 900,
+        system: INVESTOR_UPDATE_SYSTEM,
+        messages: [{
+          role: "user",
+          content: `WHAT HAPPENED THIS MONTH: ${whatHappened}
+KEY NUMBERS: ${keyNumbers || "None provided"}
+THE ASK: ${theAsk || "None provided"}
+
+Write the investor update.`,
+        }],
+      });
+
+      const update = updateMsg.content.find(b => b.type === "text")?.text;
+      if (!update) throw new Error("No response");
+
+      const entry = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        mode: "update",
+        meetingType: "Investor Update",
+        whoTheyAre: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+        desiredOutcome: theAsk || "Monthly update",
+        brief: update,
+      };
+
+      const history = await getHistory();
+      history.unshift(entry);
+      await saveHistory(history.slice(0, 100));
+
+      return res.status(200).json({ brief: update, logId: entry.id });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Failed to generate update. Check your API key." });
+    }
+  }
 
   if (mode === "investor") {
     if (!fundName || !conversationStage) {
@@ -172,7 +240,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // Meeting brief mode
   if (!meetingType || !whoTheyAre || !desiredOutcome) {
     return res.status(400).json({ error: "All fields required" });
   }
