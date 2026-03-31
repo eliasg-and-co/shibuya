@@ -464,7 +464,7 @@ export default function Home() {
           --accent: #c8a96e; --accent-dim: rgba(200,169,110,0.15); --red: #e05c5c;
           --mono: 'DM Mono', monospace; --serif: 'Instrument Serif', serif; --r: 12px;
         }
-        .mode-investor { --bg: #f5f2ec; --surface: #ede9e0; --border: rgba(0,0,0,0.09); --border-active: rgba(0,0,0,0.22); --ink: #1a1a1a; --ink-mid: rgba(26,26,26,0.55); --ink-dim: rgba(26,26,26,0.35); --accent: #b8922a; --accent-dim: rgba(184,146,42,0.12); --red: #c0392b; }
+        .mode-investor { --bg: #14100a; --surface: #1e1810; --border: rgba(200,169,110,0.15); --border-active: rgba(200,169,110,0.3); --ink: #e8e4dc; --ink-mid: rgba(232,228,220,0.55); --ink-dim: rgba(232,228,220,0.28); --accent: #c8a96e; --accent-dim: rgba(200,169,110,0.15); --red: #e05c5c; }
         .mode-update { --bg: #0a0f1a; --surface: #111827; --border: rgba(100,140,255,0.12); --border-active: rgba(100,140,255,0.3); --ink: #e4eaf8; --ink-mid: rgba(228,234,248,0.55); --ink-dim: rgba(228,234,248,0.28); --accent: #7b9cff; --accent-dim: rgba(123,156,255,0.12); --red: #e05c5c; }
 
         html, body { background: var(--bg); color: var(--ink); font-family: var(--mono); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100dvh; overscroll-behavior: none; transition: background 0.35s ease, color 0.35s ease; }
@@ -548,10 +548,10 @@ export default function Home() {
         .stat-label { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); }
         .history-list { display: flex; flex-direction: column; gap: 8px; }
         .history-item { display: flex; align-items: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
-        .history-item.is-investor { background: #ede9e0; border-color: rgba(0,0,0,0.09); }
-        .history-item.is-investor .history-who { color: #1a1a1a; }
-        .history-item.is-investor .history-date { color: rgba(26,26,26,0.35); }
-        .history-item.is-investor .history-type { color: #b8922a; }
+        .history-item.is-investor { background: #1e1810; border-color: rgba(200,169,110,0.15); }
+        .history-item.is-investor .history-who { color: #e8e4dc; }
+        .history-item.is-investor .history-date { color: rgba(232,228,220,0.35); }
+        .history-item.is-investor .history-type { color: #c8a96e; }
         .history-item.is-update { background: #111827; border-color: rgba(100,140,255,0.15); }
         .history-item.is-update .history-who { color: #e4eaf8; }
         .history-item.is-update .history-date { color: rgba(228,234,248,0.35); }
