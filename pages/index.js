@@ -324,7 +324,7 @@ export default function Home() {
           {view === "form" && appMode === "brief" && (
             <div className="fade-in">
               <div className="form-intro">
-                <h1>Who are you<br /><em>walking into?</em></h1>
+                <h1>Who are you<br /><em>meeting?</em></h1>
                 <p className="form-sub">Fill this in. Brief in 60 seconds.</p>
               </div>
               <form onSubmit={handleSubmit}>
@@ -345,7 +345,7 @@ export default function Home() {
                 </div>
                 <div className="field">
                   <label>What you want from this meeting</label>
-                  <textarea placeholder="The specific outcome you're walking in for" value={briefForm.desiredOutcome} onChange={e => setBriefForm({ ...briefForm, desiredOutcome: e.target.value })} required rows={3} />
+                  <textarea placeholder="The specific outcomes you're after" value={briefForm.desiredOutcome} onChange={e => setBriefForm({ ...briefForm, desiredOutcome: e.target.value })} required rows={3} />
                 </div>
                 {error && <div className="error-msg">{error}</div>}
                 <button type="submit" className="submit-btn">Generate brief →</button>
@@ -358,7 +358,7 @@ export default function Home() {
             <div className="fade-in">
               <div className="form-intro">
                 <h1>Who's writing<br /><em>the check?</em></h1>
-                <p className="form-sub">Hard questions. Draft answers. Walk in ready.</p>
+                <p className="form-sub">Hard questions. Thoughtful answers. Walk in ready.</p>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="field">
@@ -396,7 +396,7 @@ export default function Home() {
               <form onSubmit={handleSubmit}>
                 <div className="field">
                   <label>What happened this month</label>
-                  <textarea placeholder="Bullet points, rough notes, stream of consciousness — anything." value={updateForm.whatHappened} onChange={e => setUpdateForm({ ...updateForm, whatHappened: e.target.value })} required rows={5} />
+                  <textarea placeholder="Bullet points, rough notes, stream of consciousness..." value={updateForm.whatHappened} onChange={e => setUpdateForm({ ...updateForm, whatHappened: e.target.value })} required rows={5} />
                 </div>
                 <div className="field">
                   <label>Key numbers (optional)</label>

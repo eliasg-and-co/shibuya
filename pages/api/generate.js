@@ -158,7 +158,7 @@ export default async function handler(req, res) {
     }
     try {
       const updateMsg = await client.messages.create({
-        model: "claude-opus-4-5",
+        model: "claude-sonnet-4-5",
         max_tokens: 900,
         system: INVESTOR_UPDATE_SYSTEM,
         messages: [{ role: "user", content: `WHAT HAPPENED THIS MONTH: ${whatHappened}\nKEY NUMBERS: ${keyNumbers || "None provided"}\nTHE ASK: ${theAsk || "None provided"}\n\nWrite the investor update.` }],
@@ -236,7 +236,7 @@ export default async function handler(req, res) {
   let researchContext = "";
   try {
     const researchMsg = await client.messages.create({
-      model: "claude-opus-4-5",
+      model: "claude-sonnet-4-5",
       max_tokens: 600,
       tools: [{ type: "web_search_20250305", name: "web_search" }],
       system: RESEARCH_PROMPT,
